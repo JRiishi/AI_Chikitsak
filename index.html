@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical History Analyzer</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .form-container {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed #4facfe;
+            border-radius: 8px;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        input[type="file"]:hover {
+            border-color: #00f2fe;
+            background: #f0f8ff;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 120px;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            width: 100%;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4facfe;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #4facfe;
+        }
+
+        .result h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .result-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .result-section h4 {
+            color: #4facfe;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .result-section p {
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .error {
+            background: #fee;
+            border-left-color: #ff4757;
+            color: #c44569;
+        }
+
+        .file-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e8f5e8;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            color: #2d5a2d;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        function MedicalAnalyzer() {
+            const [file, setFile] = useState(null);
+            const [problem, setProblem] = useState('');
+            const [result, setResult] = useState(null);
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState(null);
+
+            const handleFileChange = (e) => {
+                const selectedFile = e.target.files[0];
+                if (selectedFile && selectedFile.type === 'application/pdf') {
+                    setFile(selectedFile);
+                    setError(null);
+                } else {
+                    setError('Please select a valid PDF file');
+                    setFile(null);
+                }
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                
+                if (!file || !problem.trim()) {
+                    setError('Please select a PDF file and describe your symptoms');
+                    return;
+                }
+
+                setLoading(true);
+                setError(null);
+                setResult(null);
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('problem', problem);
+
+                try {
+                    const response = await fetch('https://11nwmndl-8000.inc1.devtunnels.ms/MedicalHistoryPdf', {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    setResult(data.analysis);
+                } catch (err) {
+                    setError(`Error: ${err.message}. Make sure your FastAPI server is running on localhost:8000`);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            return (
+                <div className="container">
+                    <div className="header">
+                        <h1>🏥 Medical History Analyzer</h1>
+                        <p>Upload your medical history PDF and describe your symptoms for AI-powered analysis</p>
+                    </div>
+
+                    <div className="form-container">
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <label htmlFor="file">📄 Upload Medical History PDF</label>
+                                <input
+                                    type="file"
+                                    id="file"
+                                    accept=".pdf"
+                                    onChange={handleFileChange}
+                                    required
+                                />
+                                {file && (
+                                    <div className="file-info">
+                                        ✅ Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="problem">🩺 Describe Your Current Symptoms</label>
+                                <textarea
+                                    id="problem"
+                                    value={problem}
+                                    onChange={(e) => setProblem(e.target.value)}
+                                    placeholder="Describe your current symptoms, problems, or concerns in detail..."
+                                    required
+                                />
+                            </div>
+
+                            <button 
+                                type="submit" 
+                                className="submit-btn"
+                                disabled={loading || !file || !problem.trim()}
+                            >
+                                {loading ? '🔄 Analyzing...' : '🔍 Analyze Medical History'}
+                            </button>
+                        </form>
+
+                        {loading && (
+                            <div className="loading">
+                                <div className="spinner"></div>
+                                <p>Analyzing your medical history and symptoms...</p>
+                            </div>
+                        )}
+
+                        {error && (
+                            <div className="result error">
+                                <h3>❌ Error</h3>
+                                <p>{error}</p>
+                            </div>
+                        )}
+
+                        {result && (
+                            <div className="result">
+                                <h3>📋 Analysis Results</h3>
+                                
+                                <div className="result-section">
+                                    <h4>📚 Medical History Summary</h4>
+                                    <p>{result.summarized_history}</p>
+                                </div>
+
+                                <div className="result-section">
+                                    <h4>💊 AI Recommendations</h4>
+                                    <p style={{whiteSpace: 'pre-line'}}>{result.ai_suggestion}</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<MedicalAnalyzer />, document.getElementById('root'));
+    </script>
+</body>
+</html>
