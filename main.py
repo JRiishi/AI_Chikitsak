@@ -19,7 +19,7 @@ def remove_markdown(text: str) -> str:
 
 # Set your Google AI (Gemini) API key (better to set via terminal export)
 if "GOOGLE_API_KEY" not in os.environ:
-    os.environ["GOOGLE_API_KEY"] = "AIzaSyC8znwczx9YBcata-JqZfTEce2SpchwSy8"
+    os.environ["GOOGLE_API_KEY"] = "API-KEY"
 
 def load_and_split_document(file_path: str):
     """
